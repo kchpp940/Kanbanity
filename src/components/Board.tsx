@@ -22,6 +22,7 @@ import { createPortal } from "react-dom";
 import { useBoard } from "../contexts/BoardContext";
 import { useBoardDragDrop } from "../hooks/useBoardDragDrop";
 import { useBoardFilters } from "../hooks/useBoardFilters";
+import { useUndoRedo } from "../hooks/useUndoRedo";
 import { BoardStatsModal } from "./BoardStatsModal";
 
 type SelectedCard = {
@@ -50,9 +51,14 @@ export function Board() {
     addLabel,
     addCard,
     updateCard,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useBoard();
 
   const { activeDragItem, handleDragStart, handleDragEnd } = useBoardDragDrop();
+  useUndoRedo();
 
   const {
     searchQuery,
@@ -200,6 +206,28 @@ export function Board() {
           {board.title}
         </h1>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Desfazer (Ctrl/Cmd+Z)"
+              aria-label="Desfazer"
+              className="rounded-full border-2 border-retro-ink bg-retro-paper px-3 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] transition-all enabled:hover:translate-y-[1px] enabled:hover:shadow-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              ↩ Undo
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Refazer (Ctrl/Cmd+Shift+Z)"
+              aria-label="Refazer"
+              className="rounded-full border-2 border-retro-ink bg-retro-paper px-3 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] transition-all enabled:hover:translate-y-[1px] enabled:hover:shadow-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              ↪ Redo
+            </button>
+          </div>
           <button
             onClick={() => setIsStatsOpen(true)}
             className="rounded-full border-2 border-retro-ink bg-retro-paper px-4 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all"

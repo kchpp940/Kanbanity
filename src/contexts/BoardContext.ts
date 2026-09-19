@@ -3,7 +3,6 @@ import type { Board, Card, Label, ListTone } from "../types/kanban";
 
 export interface BoardContextType {
   board: Board;
-  setBoard: (board: Board | ((prev: Board) => Board)) => void;
   addList: (
     title: string,
     firstCardTitle?: string,
@@ -35,6 +34,10 @@ export interface BoardContextType {
     activeType: "Card" | "List",
     overType: "Card" | "List"
   ) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export const BoardContext = createContext<BoardContextType | undefined>(undefined);

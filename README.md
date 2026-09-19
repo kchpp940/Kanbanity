@@ -73,11 +73,14 @@ Tudo isso em uma interface com:
   - Quantidade de cards atrasados.
   - Lista mais movimentada (com mais cards).
 
-### Persistência Local
+### Persistência Local, Sincronização e Histórico
 
-- Todo o estado do board (listas, cards e etiquetas) é salvo em `localStorage` usando o hook `usePersistentState`.
-- Ao recarregar a página, o quadro é restaurado automaticamente.
-- Chave de armazenamento utilizada: `kanbanity-board`.
+- Todo o estado do board é salvo de forma atômica em uma única chave localStorage (kanbanity-board), em um envelope versionado (formato 2). Dados legados (quadro bruto da versão anterior) migram automaticamente e dados corrompidos nunca quebram a inicialização.
+- Cada modificação real (criar/editar/excluir listas e cartões, reordenar listas, mover cartões na mesma lista ou entre listas e criar etiquetas) é uma operação atômica com id estável, relógio de Lamport e origem da aba. Ações sem mudança real (cancelar drag, soltar na posição original, alvo inexistente) não geram operação nem histórico.
+- Várias abas sincronizam via eventos storage (sem polling, sem backend, sem refresh). Operações são deduzidas por id e reduzidas em ordem canônica (clock depois origin), então eventos fora de ordem ou duplicados convergem exatamente para o mesmo estado.
+- Conflitos usam regras determinísticas: último escritor ganha por campo (Lamport + origem); movimentos concorrentes do mesmo cartão compõem a ordenação canonicamente; exclusões vencem edições/movimentos atrasados: um objeto excluído nunca reaparece, mas o undo de uma exclusão pode incorporar edições concorrentes.
+- Undo/Redo por aba com botões no cabeçalho e atalhos Ctrl/Cmd+Z e Ctrl/Cmd+Shift+Z (ou Ctrl/Cmd+Y). O histórico é apenas local: atualizações remotas não entram na pilha de undo e novas ações locais descartam o branch de redo. Undo nunca reverte edições alheias nem ressuscita objetos removidos por outra aba.
+- Ao recarregar, o estado final é reconstruído a partir do snapshot, operações e metadados CRDT; o log é compactado automaticamente sem perder convergência entre abas compactadas independentemente.
 
 ### Tema e Visual
 
