@@ -75,9 +75,25 @@ Tudo isso em uma interface com:
 
 ### Persistência Local
 
-- Todo o estado do board (listas, cards e etiquetas) é salvo em `localStorage` usando o hook `usePersistentState`.
-- Ao recarregar a página, o quadro é restaurado automaticamente.
-- Chave de armazenamento utilizada: `kanbanity-board`.
+- Todo o estado do board é persistido de forma atômica em uma única chave
+  `kanbanity-board` dentro do `localStorage` (um documento com um log de
+  operações — sem estado de negócio dividido em várias chaves).
+- Múltiplas abas são sincronizadas em tempo real via eventos `storage`:
+  cada mutação real é uma operação com carimbo de Lamport, ordem por chave
+  fracionária (fractional indexing) e ids únicos por aba. Alterações
+  concorrentes em objetos distintos são todas preservadas; edições/movimentos
+  concorrentes no mesmo objeto convergem por uma regra determinística
+  (timestamp maior vence; empate por id da operação). Exclusões são
+  aderentes — uma edição ou movimento tardio baseado num estado antigo nunca
+  ressuscita um objeto apagado.
+- Undo/Redo comuns de editor: atalhos `Ctrl/Cmd+Z` e `Ctrl/Cmd+Shift+Z` (ou
+  `Ctrl+Y`), além de botões na barra superior. Cada ação do usuário gera no
+  máximo uma entrada de histórico; cancelar arrasto, arrastar para a mesma
+  posição ou alvejar algo já removido não polui o histórico. Atualizações
+  recebidas de outras abas nunca viram ações desfazíveis desta aba, e desfazer
+  preserva edições remotas não relacionadas.
+- A migração do formato antigo (quadro serializado) é automática e dados
+  corrompidos não impedem a inicialização.
 
 ### Tema e Visual
 

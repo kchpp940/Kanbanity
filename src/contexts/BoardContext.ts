@@ -35,6 +35,10 @@ export interface BoardContextType {
     activeType: "Card" | "List",
     overType: "Card" | "List"
   ) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export const BoardContext = createContext<BoardContextType | undefined>(undefined);

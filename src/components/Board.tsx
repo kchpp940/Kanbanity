@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
@@ -23,6 +23,36 @@ import { useBoard } from "../contexts/BoardContext";
 import { useBoardDragDrop } from "../hooks/useBoardDragDrop";
 import { useBoardFilters } from "../hooks/useBoardFilters";
 import { BoardStatsModal } from "./BoardStatsModal";
+
+function useUndoRedoShortcuts() {
+  const { undo, redo, canUndo, canRedo } = useBoard();
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+      const key = event.key.toLowerCase();
+      if (key !== "z" && key !== "y") return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (key === "y" || event.shiftKey) {
+        if (canRedo) redo();
+      } else if (canUndo) {
+        undo();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo, canUndo, canRedo]);
+}
 
 type SelectedCard = {
   listId: string;
@@ -50,7 +80,13 @@ export function Board() {
     addLabel,
     addCard,
     updateCard,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useBoard();
+
+  useUndoRedoShortcuts();
 
   const { activeDragItem, handleDragStart, handleDragEnd } = useBoardDragDrop();
 
@@ -200,6 +236,28 @@ export function Board() {
           {board.title}
         </h1>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Desfazer (Ctrl/Cmd+Z)"
+              aria-label="Desfazer"
+              className="rounded-full border-2 border-retro-ink bg-retro-paper px-3 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] transition-all enabled:hover:translate-y-[1px] enabled:hover:shadow-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              ↩ Undo
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Refazer (Ctrl/Cmd+Shift+Z)"
+              aria-label="Refazer"
+              className="rounded-full border-2 border-retro-ink bg-retro-paper px-3 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] transition-all enabled:hover:translate-y-[1px] enabled:hover:shadow-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            >
+              ↪ Redo
+            </button>
+          </div>
           <button
             onClick={() => setIsStatsOpen(true)}
             className="rounded-full border-2 border-retro-ink bg-retro-paper px-4 py-1 text-sm font-bold font-retroHeading uppercase text-retro-ink shadow-[2px_2px_0_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all"

@@ -1,10 +1,20 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import App from "./App";
 
 describe("Board Integration Tests", () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+   afterEach(() => {
+     cleanup();
   });
 
   it("should create a new list", async () => {
@@ -98,7 +108,7 @@ describe("Board Integration Tests", () => {
     // 2. Unmount App (simulating refresh/close)
     unmount();
 
-    // 3. Render App again
+    // 3. Render App again (cleanup guarantees a fresh mount like a refresh)
     render(<App />);
 
     // 4. Check if data persists
